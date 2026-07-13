@@ -1,0 +1,19 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+    "--cov=sample_app",
+    "--cov-report=term-missing",
+    "--cov-fail-under=80",
+]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
