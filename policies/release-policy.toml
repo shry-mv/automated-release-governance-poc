@@ -1,0 +1,12 @@
+[policy]
+id = "ARG-POL-001"
+name = "Repository Security Release Policy"
+version = "1.0.0"
+description = "Minimum security requirements for a release candidate."
+fail_closed = true
+
+[controls.trivy]
+require_valid_evidence = true
+maximum_critical = 0
+maximum_high = 0
+medium_findings_generate_warning = true
