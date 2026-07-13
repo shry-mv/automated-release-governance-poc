@@ -23,6 +23,11 @@ jobs:
       - name: Download repository
         uses: actions/checkout@v6
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
       - name: Run Trivy security scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
@@ -33,8 +38,7 @@ jobs:
           format: table
           exit-code: 0
 
-      - name: Generate JSON security evidence
-        if: always()
+      - name: Generate raw JSON evidence
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           scan-type: fs
@@ -45,10 +49,33 @@ jobs:
           output: trivy-results.json
           exit-code: 0
 
-      - name: Upload security evidence
+      - name: Normalize Trivy evidence
+        run: |
+          mkdir -p evidence/normalized
+
+          python -m governance_engine.trivy_normalizer \
+            --input trivy-results.json \
+            --output evidence/normalized/trivy-summary.json
+
+      - name: Publish normalized summary
+        run: |
+          echo "## Normalized Trivy Evidence" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat evidence/normalized/trivy-summary.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload raw security evidence
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: trivy-security-evidence
+          name: trivy-raw-evidence
           path: trivy-results.json
+          retention-days: 30
+
+      - name: Upload normalized security evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: trivy-normalized-evidence
+          path: evidence/normalized/trivy-summary.json
           retention-days: 30
