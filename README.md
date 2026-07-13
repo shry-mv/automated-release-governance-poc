@@ -1,7 +1,8 @@
 # Automated Release Governance POC
 
-[![Quality Gate](https://github.com/TU-USUARIO/automated-release-governance-poc/actions/workflows/quality-gate.yml/badge.svg)](https://github.com/shry-mv/automated-release-governance-poc/actions/workflows/quality-gate.yml)
-
+[![Quality Gate](https://github.com/shry-mv/automated-release-governance-poc/actions/workflows/quality-gate.yml/badge.svg)](https://github.com/shry-mv/automated-release-governance-poc/actions/workflows/quality-gate.yml)
+[![CodeQL](https://github.com/shry-mv/automated-release-governance-poc/actions/workflows/codeql.yml/badge.svg)](https://github.com/shry-mv/automated-release-governance-poc/actions/workflows/codeql.yml)
+[![Trivy Security Scan](https://github.com/shry-mv/automated-release-governance-poc/actions/workflows/trivy-security.yml/badge.svg)](https://github.com/shry-mv/automated-release-governance-poc/actions/workflows/trivy-security.yml)
 A portfolio reference implementation of an auditable software release governance pipeline built with Python and GitHub Actions.
 
 The project demonstrates how automated quality controls can be integrated into a CI/CD workflow and progressively evolved into a centralized, policy-driven release decision layer.
