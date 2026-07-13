@@ -57,12 +57,28 @@ jobs:
             --input trivy-results.json \
             --output evidence/normalized/trivy-summary.json
 
-      - name: Publish normalized summary
+      - name: Evaluate release policy
         run: |
-          echo "## Normalized Trivy Evidence" >> "$GITHUB_STEP_SUMMARY"
-          echo '```json' >> "$GITHUB_STEP_SUMMARY"
-          cat evidence/normalized/trivy-summary.json >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p evidence/decisions
+
+          python -m governance_engine.decision_engine \
+            --policy policies/release-policy.toml \
+            --evidence evidence/normalized/trivy-summary.json \
+            --output evidence/decisions/release-decision.json
+
+      - name: Publish governance decision
+        if: always()
+        shell: bash
+        run: |
+          echo "## Release Governance Decision" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -f evidence/decisions/release-decision.json ]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat evidence/decisions/release-decision.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Decision evidence was not generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload raw security evidence
         if: always()
@@ -79,3 +95,46 @@ jobs:
           name: trivy-normalized-evidence
           path: evidence/normalized/trivy-summary.json
           retention-days: 30
+
+      - name: Upload governance decision
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-governance-decision
+          path: evidence/decisions/release-decision.json
+          retention-days: 30
+
+      - name: Enforce release decision
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          decision_path = Path(
+              "evidence/decisions/release-decision.json"
+          )
+
+          if not decision_path.exists():
+              print(
+                  "FAIL: governance decision evidence "
+                  "was not generated."
+              )
+              sys.exit(1)
+
+          decision_document = json.loads(
+              decision_path.read_text(encoding="utf-8")
+          )
+
+          decision = decision_document.get("decision", "FAIL")
+
+          print(f"Release governance decision: {decision}")
+
+          if decision == "FAIL":
+              print("Release candidate blocked by policy.")
+              sys.exit(1)
+
+          print("Release candidate satisfies the blocking controls.")
+          PY
